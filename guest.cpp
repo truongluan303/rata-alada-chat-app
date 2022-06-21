@@ -18,6 +18,20 @@
 using namespace std;
 
 
+#define EXIT_COMMAND    "/exit"
+#define CONSOLE_GREEN   "\x1b[32m"
+#define CONSOLE_RESET   "\x1b[0m"
+
+
+int             client_socket_desc;
+hostent*        host;
+sockaddr_in     send_sock_addr;
+size_t          bytes_read          = 0;
+size_t          bytes_written       = 0;
+struct timeval  start1;
+struct timeval  end1;
+
+
 /******************************************************************************
  * @brief   Handle keyboard intterupt
  * 
@@ -37,73 +51,91 @@ void exit_session();
 //===========================================================================//
 int main(int argc, char *argv[])
 {
-    //we need 2 things: ip address and port number, in that order
+    // we need ip address and port number in that order
     if(argc != 3)
     {
         cerr << "Usage: ip_address port" << endl; exit(0); 
-    } //grab the IP address and port number 
-    char *server_ip = argv[1]; int port = atoi(argv[2]); 
-    //create a message buffer 
-    char msg[1500]; 
+    } //grab the IP address and port number
+
+    char *server_ip = argv[1];
+    int port = atoi(argv[2]);
+    char msg[1500];
+
     //setup a socket and connection tools 
-    struct hostent *host = gethostbyname(server_ip); 
-    sockaddr_in send_sock_addr;   
+    host = gethostbyname(server_ip); 
     bzero((char*)&send_sock_addr, sizeof(send_sock_addr)); 
     send_sock_addr.sin_family = AF_INET; 
     send_sock_addr.sin_addr.s_addr = inet_addr(
         inet_ntoa(*(struct in_addr*)*host->h_addr_list)
     );
     send_sock_addr.sin_port = htons(port);
-    int client_socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    //try to connect...
+    client_socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+    // try to connect...
     int status = connect(
         client_socket_desc, (sockaddr*) &send_sock_addr, sizeof(send_sock_addr)
     );
-    if(status < 0)
+    if (status < 0)
     {
-        cout<<"Error connecting to socket!"<<endl;
+        cout << "Error while connecting!" << endl;
         exit(1);
     }
-    cout << "Connected to the server!" << endl;
-    int bytes_read, bytes_written = 0;
-    struct timeval start1, end1;
+    cout << "Connected!" << endl;
     gettimeofday(&start1, NULL);
 
     // register signal and signal handler
     signal(SIGINT, handle_keyboard_interrupt);
-    while(1)
+    cout << CONSOLE_GREEN;
+    while (true)
     {
-        cout << ">";
+        cout << "<?> ";
         string data;
         getline(cin, data);
         memset(&msg, 0, sizeof(msg));   //clear the buffer
         strcpy(msg, data.c_str());
 
-        if(data == "/exit")
+        if (data == EXIT_COMMAND)
         {
-            send(client_socket_desc, (char*)&msg, strlen(msg), 0);
-            break;
+            exit_session();
         }
         bytes_written += send(client_socket_desc, (char*)&msg, strlen(msg), 0);
         cout << "Awaiting server response..." << endl;
         memset(&msg, 0, sizeof(msg));//clear the buffer
         bytes_read += recv(client_socket_desc, (char*)&msg, sizeof(msg), 0);
         
-        if(!strcmp(msg, "exit"))
+        if (!strcmp(msg, EXIT_COMMAND))
         {
-            cout << "Server has quit the session" << endl;
+            cout << "Server has quit the session!" << endl;
             break;
         }
-        cout << "Server: " << msg << endl;
+        cout << msg << endl;
     }
+}
 
+
+void handle_keyboard_interrupt(int signum)
+{
+    exit_session();
+}
+
+
+void exit_session()
+{
+    send(
+        client_socket_desc,
+        (char*)&EXIT_COMMAND,
+        strlen(EXIT_COMMAND),
+        0
+    );
     gettimeofday(&end1, NULL);
     close(client_socket_desc);
+
+    cout << CONSOLE_RESET << endl << endl;
     cout << "********Session********" << endl;
-    cout << "Bytes written: " << bytes_written << 
-    " Bytes read: " << bytes_read << endl;
-    cout << "Elapsed time: " << (end1.tv_sec- start1.tv_sec) 
-      << " secs" << endl;
+    cout << "Bytes written: " << bytes_written;
+    cout << " Bytes read: " << bytes_read << endl;
+    cout << "Elapsed time: " << (end1.tv_sec- start1.tv_sec);
+    cout << " seconds" << endl;
     cout << "Connection closed" << endl;
-    return 0;    
+    exit(0);
 }

@@ -1,6 +1,8 @@
-*
-!/**/
-!*.*
-
 *.out
 *.exe
+*.o
+
+# the 3 lines below are used to ignore lines without extension
+*
+!*.*
+!*/
