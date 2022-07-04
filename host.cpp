@@ -149,7 +149,7 @@ void exit_session()
     gettimeofday(&end1, NULL);
     close(server_socket_desc);
 
-    cout << "********Session********" << endl;
+    cout << "******** Session ********" << endl;
     cout << "Bytes written: " << bytes_written;
     cout << " Bytes read: " << bytes_read << endl;
     cout << "Elapsed time: " << (end1.tv_sec- start1.tv_sec);

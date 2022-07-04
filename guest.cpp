@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         cout << "<?> ";
         string data;
         getline(cin, data);
-        memset(&msg, 0, sizeof(msg));   //clear the buffer
+        memset(&msg, 0, sizeof(msg));
         strcpy(msg, data.c_str());
 
         if (data == EXIT_COMMAND)
@@ -99,8 +99,7 @@ int main(int argc, char *argv[])
             exit_session();
         }
         bytes_written += send(client_socket_desc, (char*)&msg, strlen(msg), 0);
-        cout << "Awaiting server response..." << endl;
-        memset(&msg, 0, sizeof(msg));//clear the buffer
+        memset(&msg, 0, sizeof(msg));
         bytes_read += recv(client_socket_desc, (char*)&msg, sizeof(msg), 0);
         
         if (!strcmp(msg, EXIT_COMMAND))
@@ -130,12 +129,10 @@ void exit_session()
     gettimeofday(&end1, NULL);
     close(client_socket_desc);
 
-    cout << CONSOLE_RESET << endl << endl;
-    cout << "********Session********" << endl;
-    cout << "Bytes written: " << bytes_written;
-    cout << " Bytes read: " << bytes_read << endl;
-    cout << "Elapsed time: " << (end1.tv_sec- start1.tv_sec);
-    cout << " seconds" << endl;
-    cout << "Connection closed" << endl;
+    cout << CONSOLE_RESET << endl << endl << endl;
+    cout << "<?>" << "Bytes written: " << bytes_written << endl;
+    cout << "<?>" << " Bytes read: " << bytes_read << endl;
+    cout << "<?>" << "Elapsed time: " << (end1.tv_sec- start1.tv_sec);
+    cout << " seconds" << endl << endl;
     exit(0);
 }
